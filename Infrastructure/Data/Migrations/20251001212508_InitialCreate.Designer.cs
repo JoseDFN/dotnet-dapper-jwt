@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(DotnetDapperJwtDbContext))]
-    [Migration("20251001184215_InitialCreate")]
+    [Migration("20251001212508_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -34,22 +34,19 @@ namespace Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
                     b.Property<decimal>("Total")
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("total");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("UserId")
                         .HasColumnType("integer")
                         .HasColumnName("user_id");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -67,9 +64,6 @@ namespace Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("OrderId")
                         .HasColumnType("integer")
                         .HasColumnName("order_id");
@@ -86,7 +80,10 @@ namespace Infrastructure.Data.Migrations
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("unit_price");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("updated_at")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -112,9 +109,6 @@ namespace Infrastructure.Data.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("category");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -137,7 +131,10 @@ namespace Infrastructure.Data.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("stock");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("updated_at")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -157,16 +154,16 @@ namespace Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("name");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("updated_at")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -186,12 +183,6 @@ namespace Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("NOW()");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -202,14 +193,17 @@ namespace Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("role_id");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("username");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("updated_at")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 

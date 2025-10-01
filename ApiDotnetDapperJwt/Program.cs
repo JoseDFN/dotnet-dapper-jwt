@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Data;
+using Npgsql;
+using Infrastructure; // para UnitOfWork
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,15 +16,27 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// DbContext
+// DbContext (solo si lo necesitas en paralelo a Dapper, para migraciones/EF)
 builder.Services.AddDbContext<DotnetDapperJwtDbContext>(options =>
 {
     string connectionString  = builder.Configuration.GetConnectionString("DefaultConnection")!;
     options.UseNpgsql(connectionString);
 });
 
+// Registrar conexión IDbConnection (Dapper)
+builder.Services.AddScoped<IDbConnection>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new NpgsqlConnection(config.GetConnectionString("DefaultConnection"));
+});
+
+// Registrar UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Registrar AuthService
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// JWT Auth
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

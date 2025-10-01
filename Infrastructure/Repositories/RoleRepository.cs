@@ -12,8 +12,8 @@ public class RoleRepository : GenericRepository<Role>, IRoleRepository
 
     public override async Task<int> AddAsync(Role role)
     {
-        var sql = @"INSERT INTO roles (name, createdat, updatedat)
-                    VALUES (@Name, @CreatedAt, @UpdatedAt)
+        var sql = @"INSERT INTO roles (name, Created_At, Updated_At)
+                    VALUES (@Name, @Created_At, @Updated_At)
                     RETURNING id;";
         var id = await _connection.ExecuteScalarAsync<int>(sql, role, _transaction);
         role.Id = id;

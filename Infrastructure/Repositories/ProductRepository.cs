@@ -12,8 +12,8 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
 
     public override async Task<int> AddAsync(Product product)
     {
-        var sql = @"INSERT INTO products (name, sku, price, stock, category, createdat, updatedat)
-                    VALUES (@Name, @Sku, @Price, @Stock, @Category, @CreatedAt, @UpdatedAt)
+        var sql = @"INSERT INTO products (name, sku, price, stock, category, Created_At, Updated_At)
+                    VALUES (@Name, @Sku, @Price, @Stock, @Category, @Created_At, @Updated_At)
                     RETURNING id;";
         var id = await _connection.ExecuteScalarAsync<int>(sql, product, _transaction);
         product.Id = id;
@@ -23,7 +23,7 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
     public override async Task UpdateAsync(Product product)
     {
         var sql = @"UPDATE products 
-                    SET name=@Name, sku=@Sku, price=@Price, stock=@Stock, category=@Category, updatedat=@UpdatedAt
+                    SET name=@Name, sku=@Sku, price=@Price, stock=@Stock, category=@Category, Updated_At=@Updated_At
                     WHERE id=@Id";
         await _connection.ExecuteAsync(sql, product, _transaction);
     }

@@ -38,11 +38,6 @@ namespace Infrastructure.Configuration
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Property(u => u.CreatedAt)
-                .HasColumnName("created_at")
-                .HasDefaultValueSql("NOW()");
-
         }
     }
 }

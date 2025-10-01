@@ -9,4 +9,6 @@ public interface IUserRepository : IGenericRepository<User>
 
     // Para devolver información con rol incluido
     Task<User?> GetUserWithRoleAsync(int id);
+
+    Task<(int UserId, string RoleName)?> AuthenticateAsync(string username, string passwordHash);
 }

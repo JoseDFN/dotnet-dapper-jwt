@@ -1,6 +1,8 @@
+using Application.DTOs.Orders;
 using Application.Interfaces;
 using Dapper;
 using Domain.Entities;
+using Newtonsoft.Json;
 using System.Data;
 
 namespace Infrastructure.Repositories;
@@ -9,11 +11,25 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 {
     public OrderRepository(IDbConnection connection, IDbTransaction transaction)
         : base(connection, transaction) { }
+    
+    public async Task<int> CreateOrderUsingFunctionAsync(int userId, IEnumerable<CreateOrderItemDto> items)
+    {
+        var jsonItems = JsonConvert.SerializeObject(items);
+
+        var sql = "SELECT create_order(@UserId, @Items::json)";
+        var orderId = await _connection.ExecuteScalarAsync<int>(
+            sql,
+            new { UserId = userId, Items = jsonItems },
+            _transaction
+        );
+
+        return orderId;
+    }
 
     public override async Task<int> AddAsync(Order order)
     {
-        var sql = @"INSERT INTO orders (userid, total, createdat, updatedat)
-                    VALUES (@UserId, @Total, @CreatedAt, @UpdatedAt)
+        var sql = @"INSERT INTO orders (user_id, total, Created_At, Updated_At)
+                    VALUES (@UserId, @Total, @Created_At, @Updated_At)
                     RETURNING id;";
         var id = await _connection.ExecuteScalarAsync<int>(sql, order, _transaction);
         order.Id = id;
@@ -23,7 +39,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
     public override async Task UpdateAsync(Order order)
     {
         var sql = @"UPDATE orders
-                    SET total=@Total, updatedat=@UpdatedAt
+                    SET total=@Total, Updated_At=@Updated_At
                     WHERE id=@Id";
         await _connection.ExecuteAsync(sql, order, _transaction);
     }
@@ -35,8 +51,8 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
         foreach (var item in items)
         {
             item.OrderId = orderId;
-            var sqlItem = @"INSERT INTO orderitems (orderid, productid, quantity, unitprice, createdat, updatedat)
-                            VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice, @CreatedAt, @UpdatedAt)";
+            var sqlItem = @"INSERT INTO orderitems (order_id, product_id, quantity, unitprice, Created_At, Updated_At)
+                            VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice, @Created_At, @Updated_At)";
             await _connection.ExecuteAsync(sqlItem, item, _transaction);
         }
 
@@ -45,12 +61,12 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 
     public async Task<Order?> GetOrderWithItemsAsync(int orderId)
     {
-        var sql = @"SELECT o.id, o.userid, o.total, o.createdat, o.updatedat,
-                           oi.id, oi.orderid, oi.productid, oi.quantity, oi.unitprice, oi.createdat, oi.updatedat,
-                           p.id, p.name, p.sku, p.price, p.stock, p.category, p.createdat, p.updatedat
+        var sql = @"SELECT o.id, o.userid, o.total, o.Created_At, o.Updated_At,
+                           oi.id, oi.orderid, oi.product_id, oi.quantity, oi.unitprice, oi.Created_At, oi.Updated_At,
+                           p.id, p.name, p.sku, p.price, p.stock, p.category, p.Created_At, p.Updated_At
                     FROM orders o
                     INNER JOIN orderitems oi ON o.id = oi.orderid
-                    INNER JOIN products p ON oi.productid = p.id
+                    INNER JOIN products p ON oi.product_id = p.id
                     WHERE o.id=@OrderId";
 
         var orderDict = new Dictionary<int, Order>();
@@ -79,7 +95,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 
     public async Task<IEnumerable<Order>> GetOrdersByUserAsync(int userId)
     {
-        var sql = "SELECT * FROM orders WHERE userid=@UserId";
+        var sql = "SELECT * FROM orders WHERE user_id=@UserId";
         return await _connection.QueryAsync<Order>(sql, new { UserId = userId }, _transaction);
     }
 }

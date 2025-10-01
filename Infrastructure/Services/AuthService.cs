@@ -28,8 +28,7 @@ public class AuthService : IAuthService
         if (user == null)
             return null;
 
-        // 🔑 validación simple, en un real project usarías BCrypt o Argon2
-        if (user.PasswordHash != request.Password)
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return null;
 
         // obtener rol

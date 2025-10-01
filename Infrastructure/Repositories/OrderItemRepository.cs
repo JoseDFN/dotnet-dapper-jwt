@@ -12,8 +12,8 @@ public class OrderItemRepository : GenericRepository<OrderItem>, IOrderItemRepos
 
     public override async Task<int> AddAsync(OrderItem item)
     {
-        var sql = @"INSERT INTO orderitems (orderid, productid, quantity, unitprice, createdat, updatedat)
-                    VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice, @CreatedAt, @UpdatedAt)
+        var sql = @"INSERT INTO orderitems (order_id, product_id, quantity, unitprice, Created_At, Updated_At)
+                    VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice, @Created_At, @Updated_At)
                     RETURNING id;";
         var id = await _connection.ExecuteScalarAsync<int>(sql, item, _transaction);
         item.Id = id;
@@ -23,7 +23,7 @@ public class OrderItemRepository : GenericRepository<OrderItem>, IOrderItemRepos
     public override async Task UpdateAsync(OrderItem item)
     {
         var sql = @"UPDATE orderitems 
-                    SET quantity=@Quantity, unitprice=@UnitPrice, updatedat=@UpdatedAt
+                    SET quantity=@Quantity, unitprice=@UnitPrice, Updated_At=@Updated_At
                     WHERE id=@Id";
         await _connection.ExecuteAsync(sql, item, _transaction);
     }

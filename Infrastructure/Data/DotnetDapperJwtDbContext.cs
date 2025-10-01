@@ -35,12 +35,12 @@ namespace Infrastructure.Data
             {
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Entity.CreatedAt = DateTime.UtcNow;
-                    entry.Entity.UpdatedAt = DateTime.UtcNow;
+                    entry.Entity.created_at = DateTime.UtcNow;
+                    entry.Entity.updated_at = DateTime.UtcNow;
                 }
                 else if (entry.State == EntityState.Modified)
                 {
-                    entry.Entity.UpdatedAt = DateTime.UtcNow;
+                    entry.Entity.updated_at = DateTime.UtcNow;
                 }
             }
 

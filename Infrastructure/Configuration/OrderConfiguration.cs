@@ -31,11 +31,6 @@ namespace Infrastructure.Configuration
                 .HasColumnName("total")
                 .HasColumnType("numeric(12,2)")
                 .IsRequired();
-
-            builder.Property(o => o.CreatedAt)
-                .HasColumnName("created_at")
-                .HasDefaultValueSql("NOW()");
-
         }
     }
 }
