@@ -9,6 +9,7 @@ using System.Data;
 using Npgsql;
 using Infrastructure; // para UnitOfWork
 using Microsoft.OpenApi.Models;
+using Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +67,9 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Registrar AuthService
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Registrar Global Exception Handling
+builder.Services.AddGlobalExceptionHandling();
+
 // JWT Auth
 builder.Services.AddAuthentication(options =>
 {
@@ -97,6 +101,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Global Exception Handling - debe ir al inicio del pipeline
+app.UseGlobalExceptionHandling();
 
 app.UseHttpsRedirection();
 
