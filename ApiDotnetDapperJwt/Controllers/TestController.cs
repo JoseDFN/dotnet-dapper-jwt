@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Domain.Exceptions;
 
 namespace ApiProject.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
 public class TestController : ControllerBase
 {
     [HttpGet("exception")]
@@ -54,5 +56,38 @@ public class TestController : ControllerBase
     public IActionResult ThrowCustomUnauthorizedException()
     {
         throw new UnauthorizedException("Invalid credentials provided");
+    }
+
+    // Endpoints para probar UnitOfWork
+    [HttpGet("unitofwork-test")]
+    public IActionResult TestUnitOfWork()
+    {
+        return Ok(new { message = "UnitOfWork test endpoint - check logs for transaction details" });
+    }
+
+    // Endpoint para verificar autorización Admin
+    [HttpGet("admin-only")]
+    public IActionResult AdminOnly()
+    {
+        var user = User.Identity?.Name ?? "Unknown";
+        var roles = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+        
+        return Ok(new { 
+            message = "This endpoint is only accessible by Admin users",
+            currentUser = user,
+            userRoles = roles,
+            timestamp = DateTime.UtcNow
+        });
+    }
+
+    // Endpoint público para probar autorización (debe devolver 401 sin token)
+    [HttpGet("public-test")]
+    [AllowAnonymous]
+    public IActionResult PublicTest()
+    {
+        return Ok(new { 
+            message = "This is a public endpoint - no authentication required",
+            timestamp = DateTime.UtcNow
+        });
     }
 }
