@@ -1,18 +1,19 @@
 # API .NET con Dapper y JWT
 
-Una API REST desarrollada en .NET 9 que implementa autenticación JWT, gestión de usuarios, productos y órdenes utilizando Dapper como ORM y PostgreSQL como base de datos.
+Una API REST desarrollada en .NET 9 que implementa autenticación JWT con refresh tokens, gestión de usuarios, productos y órdenes utilizando Dapper como ORM y PostgreSQL como base de datos.
 
 ## 🚀 Características
 
-- **Autenticación JWT**: Sistema de autenticación seguro con tokens JWT
+- **Autenticación JWT**: Sistema de autenticación seguro con tokens JWT y refresh tokens
 - **Arquitectura Clean**: Separación en capas (Domain, Application, Infrastructure, API)
-- **Entity Framework Core**: ORM moderno con migraciones automáticas
+- **Entity Framework Core**: Para migraciones y estructura de base de datos
 - **Dapper ORM**: Acceso a datos eficiente con Dapper para consultas complejas
 - **PostgreSQL**: Base de datos robusta y escalable
-- **Swagger/OpenAPI**: Documentación automática de la API
+- **Swagger/OpenAPI**: Documentación automática de la API con autenticación integrada
 - **BCrypt**: Encriptación segura de contraseñas
 - **Unit of Work**: Patrón para gestión de transacciones
 - **Roles y Autorización**: Sistema de roles (Admin, User)
+- **Procedimientos Almacenados**: Funciones PostgreSQL para operaciones complejas
 
 ## 🏗️ Arquitectura del Proyecto
 
@@ -29,14 +30,13 @@ dotnet-dapper-jwt/
 
 - .NET 9.0 SDK
 - PostgreSQL 12+
-- Entity Framework Core CLI (se instala automáticamente con .NET)
-- Visual Studio 2022 o VS Code
+- Visual Studio 2022, VS Code o cualquier editor compatible con .NET
 
 ## 🛠️ Instalación
 
 ### 1. Clonar el repositorio
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/JoseDFN/dotnet-dapper-jwt
 cd dotnet-dapper-jwt
 ```
 
@@ -73,26 +73,67 @@ Actualizar el archivo `appsettings.json` con tu cadena de conexión:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=netdapperjwt;Username=postgres;Password=tu_password"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=netdapperjwt;Username=postgres;Password=tu_password"
   }
 }
 ```
 
-### 4. Restaurar dependencias y ejecutar
-
+### 4. Ejecutar la aplicación
 ```bash
 dotnet restore
 dotnet run --project ApiDotnetDapperJwt
 ```
 
-La API estará disponible en: `https://localhost:7000` (HTTPS) o `http://localhost:5092` (HTTP)
+**URLs disponibles:**
+- HTTP: `http://localhost:5092`
+- HTTPS: `https://localhost:7025`
+- Swagger: `http://localhost:5092/swagger`
+
+## 🚀 Primer Usuario - Guía Rápida
+
+### Paso 1: Crear tu primer usuario
+```bash
+curl -X POST "http://localhost:5092/api/users" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "mi_usuario", "password": "mi_password123"}'
+```
+
+### Paso 2: Iniciar sesión
+```bash
+curl -X POST "http://localhost:5092/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "mi_usuario", "password": "mi_password123"}'
+```
+
+### Paso 3: Usar Swagger (Recomendado)
+1. Abre `http://localhost:5092/swagger` en tu navegador
+2. Haz clic en "Authorize" (🔒)
+3. Pega tu token JWT en el campo "Value"
+4. ¡Explora la API interactivamente!
+
+### Paso 4: Crear un producto (requiere rol Admin)
+Para crear productos necesitas un usuario con rol Admin. Puedes:
+1. Modificar directamente la base de datos: `UPDATE users SET role_id = 1 WHERE username = 'mi_usuario';`
+2. O crear un nuevo usuario con `roleId: 1` en el registro
 
 ## 📚 Documentación de la API
 
 Una vez ejecutada la aplicación, puedes acceder a la documentación Swagger en:
-- **Swagger UI**: `https://localhost:5092/swagger`
+- **Swagger UI**: `http://localhost:5092/swagger`
 
 ## 🔐 Autenticación
+
+### Registro de Admin
+```http
+POST /api/users
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123",
+  "roleId": 1
+}
+```
 
 ### Registro de Usuario
 ```http
@@ -102,7 +143,7 @@ Content-Type: application/json
 {
   "username": "usuario123",
   "password": "password123",
-  "roleId": 1
+  "roleId": 2
 }
 ```
 
@@ -121,8 +162,29 @@ Content-Type: application/json
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "refresh_token_aqui",
   "username": "usuario123",
   "role": "user"
+}
+```
+
+### Refresh Token
+```http
+POST /api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "refresh_token_aqui"
+}
+```
+
+### Revocar Token
+```http
+POST /api/auth/revoke
+Content-Type: application/json
+
+{
+  "refreshToken": "refresh_token_aqui"
 }
 ```
 
@@ -145,8 +207,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `PUT /api/products/{id}` - Actualizar producto (requiere rol Admin)
 - `DELETE /api/products/{id}` - Eliminar producto (requiere rol Admin)
 
+### Órdenes
+- `POST /api/orders` - Crear orden (requiere autenticación)
+- `GET /api/orders` - Listar órdenes del usuario (requiere autenticación)
+- `GET /api/orders/{id}` - Obtener orden por ID (requiere autenticación)
+
 ### Autenticación
 - `POST /api/auth/login` - Iniciar sesión (público)
+- `POST /api/auth/refresh` - Renovar token (público)
+- `POST /api/auth/revoke` - Revocar token (público)
 
 ## 🗄️ Modelo de Datos
 
@@ -157,6 +226,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - `Username`: Nombre de usuario único
 - `PasswordHash`: Contraseña encriptada con BCrypt
 - `RoleId`: Referencia al rol del usuario
+- `RefreshToken`: Token para renovar JWT
+- `RefreshTokenExpiresAt`: Fecha de expiración del refresh token
+
+**Role**
+- `Id`: Identificador único
+- `Name`: Nombre del rol (Admin, User)
 
 **Product**
 - `Id`: Identificador único
@@ -229,21 +304,27 @@ Para probar la API, puedes usar:
 ## 📝 Ejemplo de Uso Completo
 
 ```bash
-# 1. Crear usuario
-curl -X POST "https://localhost:7000/api/users" \
+# 1. Crear usuario (rol User por defecto)
+curl -X POST "http://localhost:5092/api/users" \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123", "roleId": 1}'
+  -d '{"username": "usuario123", "password": "password123"}'
 
 # 2. Login
-curl -X POST "https://localhost:7000/api/auth/login" \
+curl -X POST "http://localhost:5092/api/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
+  -d '{"username": "usuario123", "password": "password123"}'
 
-# 3. Crear producto (con token)
-curl -X POST "https://localhost:7000/api/products" \
+# 3. Crear producto (requiere rol Admin)
+curl -X POST "http://localhost:5092/api/products" \
   -H "Authorization: Bearer TU_TOKEN_AQUI" \
   -H "Content-Type: application/json" \
   -d '{"name": "Laptop", "sku": "LAP001", "price": 1500.00, "stock": 10, "category": "Electrónicos"}'
+
+# 4. Crear orden
+curl -X POST "http://localhost:5092/api/orders" \
+  -H "Authorization: Bearer TU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{"items": [{"productId": 1, "quantity": 2}]}'
 ```
 
 ## 🤝 Contribución
@@ -264,34 +345,29 @@ Desarrollado como parte de la prueba técnica para Backend Developer.
 
 ---
 
-## 🔄 Gestión de Migraciones
+## 🔄 Gestión de Migraciones (Opcional)
 
-### Crear una nueva migración
-Cuando modifiques las entidades del dominio, crea una nueva migración. Las migraciones se guardarán en `Infrastructure/Data/Migrations/`:
+Este proyecto usa **Entity Framework solo para migraciones**. El runtime usa **Dapper** para todas las operaciones de base de datos.
+
+### Si necesitas modificar la estructura de la base de datos:
 
 ```bash
-# Crear migración después de cambios en entidades
+# Crear nueva migración
 dotnet ef migrations add NombreDeLaMigracion -p Infrastructure -s ApiDotnetDapperJwt -o Data/Migrations
 
-# Aplicar la nueva migración
+# Aplicar migración
 dotnet ef database update -p Infrastructure -s ApiDotnetDapperJwt
-```
 
-### Revertir migraciones
-```bash
-# Revertir a una migración específica
-dotnet ef database update NombreDeLaMigracion -p Infrastructure -s ApiDotnetDapperJwt
-
-# Revertir todas las migraciones
-dotnet ef database update 0 -p Infrastructure -s ApiDotnetDapperJwt
-```
-
-### Ver estado de migraciones
-```bash
-# Listar todas las migraciones aplicadas
+# Ver migraciones aplicadas
 dotnet ef migrations list -p Infrastructure -s ApiDotnetDapperJwt
 ```
 
+### Para desarrollo rápido:
+Usa los scripts SQL directamente en `scripts/` para modificar la base de datos.
+
 ---
 
-**Nota**: Asegúrate de cambiar las credenciales JWT y de base de datos antes de usar en producción.
+**⚠️ Importante**: 
+- Cambia las credenciales JWT y de base de datos antes de usar en producción
+- Los roles por defecto son: Admin (id=1) y User (id=2)
+- El proyecto está configurado para usar `appsettings.Development.json` en desarrollo
