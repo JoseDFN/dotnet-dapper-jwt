@@ -1,3 +1,5 @@
+\c netdapperjwt;
+
 -- Función: auth_user
 -- Valida credenciales (username + password_hash) y devuelve user_id y role_name si es válido.
 CREATE OR REPLACE FUNCTION auth_user(p_username VARCHAR, p_password_hash VARCHAR)
@@ -35,7 +37,7 @@ DECLARE
     v_current_stock INT;
 BEGIN
     -- 1) Crear la orden inicial con total 0 (se actualizará al final)
-    INSERT INTO orders (user_id, total, created_at, "Updated_At")
+    INSERT INTO orders (user_id, total, created_at, updated_at)
     VALUES (p_user_id, 0, NOW(), NOW())
     RETURNING id INTO v_order_id;
 
@@ -67,12 +69,12 @@ BEGIN
         END IF;
 
         -- 3) Insertar el item en order_items
-        INSERT INTO order_items (order_id, product_id, quantity, unit_price, "Created_At", "Updated_At")
+        INSERT INTO order_items (order_id, product_id, quantity, unit_price, created_at, updated_at)
         VALUES (v_order_id, v_product_id, v_quantity, v_unit_price, NOW(), NOW());
 
         -- 4) Actualizar stock: descontar la cantidad vendida
         UPDATE products
-        SET stock = stock - v_quantity, "Updated_At" = NOW()
+        SET stock = stock - v_quantity, updated_at = NOW()
         WHERE id = v_product_id;
 
         -- 5) Acumular el total
@@ -82,7 +84,7 @@ BEGIN
     -- 6) Actualizar el total de la orden y timestamp de actualización
     UPDATE orders
     SET total = v_total,
-        "Updated_At" = NOW()
+        updated_at = NOW()
     WHERE id = v_order_id;
 
     -- 7) Devolver el id de la orden creada

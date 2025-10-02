@@ -13,6 +13,8 @@ CREATE TABLE users (
     username VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role_id INT NOT NULL,
+    refresh_token VARCHAR(500),
+    refresh_token_expires_at TIMESTAMPTZ,
     "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_users_roles FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
@@ -51,6 +53,7 @@ CREATE TABLE order_items (
 );
 
 CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_users_refresh_token ON users(refresh_token);
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_product_id ON order_items(product_id);
