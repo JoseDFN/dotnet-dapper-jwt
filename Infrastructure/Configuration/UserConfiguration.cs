@@ -34,6 +34,13 @@ namespace Infrastructure.Configuration
             builder.Property(u => u.RoleId)
                 .HasColumnName("role_id");
 
+            builder.Property(u => u.RefreshToken)
+                .HasColumnName("refresh_token")
+                .HasMaxLength(500);
+
+            builder.Property(u => u.RefreshTokenExpiresAt)
+                .HasColumnName("refresh_token_expires_at");
+
             builder.HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)

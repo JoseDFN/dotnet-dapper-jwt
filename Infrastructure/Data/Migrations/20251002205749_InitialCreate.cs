@@ -55,6 +55,8 @@ namespace Infrastructure.Data.Migrations
                     username = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     role_id = table.Column<int>(type: "integer", nullable: false),
+                    refresh_token = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    refresh_token_expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },

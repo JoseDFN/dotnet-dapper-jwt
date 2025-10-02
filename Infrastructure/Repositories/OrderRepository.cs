@@ -28,7 +28,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 
     public override async Task<int> AddAsync(Order order)
     {
-        var sql = @"INSERT INTO orders (user_id, total, Created_At, Updated_At)
+        var sql = @"INSERT INTO orders (user_id, total, created_at, updated_at)
                     VALUES (@UserId, @Total, @Created_At, @Updated_At)
                     RETURNING id;";
         var id = await _connection.ExecuteScalarAsync<int>(sql, order, _transaction);
@@ -39,7 +39,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
     public override async Task UpdateAsync(Order order)
     {
         var sql = @"UPDATE orders
-                    SET total=@Total, Updated_At=@Updated_At
+                    SET total=@Total, updated_at=@Updated_At
                     WHERE id=@Id";
         await _connection.ExecuteAsync(sql, order, _transaction);
     }
@@ -51,7 +51,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
         foreach (var item in items)
         {
             item.OrderId = orderId;
-            var sqlItem = @"INSERT INTO orderitems (order_id, product_id, quantity, unitprice, Created_At, Updated_At)
+            var sqlItem = @"INSERT INTO order_items (order_id, product_id, quantity, unit_price, created_at, updated_at)
                             VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice, @Created_At, @Updated_At)";
             await _connection.ExecuteAsync(sqlItem, item, _transaction);
         }
@@ -61,11 +61,11 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 
     public async Task<Order?> GetOrderWithItemsAsync(int orderId)
     {
-        var sql = @"SELECT o.id, o.userid, o.total, o.Created_At, o.Updated_At,
-                           oi.id, oi.orderid, oi.product_id, oi.quantity, oi.unitprice, oi.Created_At, oi.Updated_At,
-                           p.id, p.name, p.sku, p.price, p.stock, p.category, p.Created_At, p.Updated_At
+        var sql = @"SELECT o.id, o.user_id, o.total, o.created_at, o.updated_at,
+                           oi.id, oi.order_id, oi.product_id, oi.quantity, oi.unit_price, oi.created_at, oi.updated_at,
+                           p.id, p.name, p.sku, p.price, p.stock, p.category, p.created_at, p.updated_at
                     FROM orders o
-                    INNER JOIN orderitems oi ON o.id = oi.orderid
+                    INNER JOIN order_items oi ON o.id = oi.order_id
                     INNER JOIN products p ON oi.product_id = p.id
                     WHERE o.id=@OrderId";
 

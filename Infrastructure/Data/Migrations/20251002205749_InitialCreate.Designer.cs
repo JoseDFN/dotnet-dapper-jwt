@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(DotnetDapperJwtDbContext))]
-    [Migration("20251001212508_InitialCreate")]
+    [Migration("20251002205749_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -188,6 +188,15 @@ namespace Infrastructure.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password_hash");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("refresh_token");
+
+                    b.Property<DateTime?>("RefreshTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("refresh_token_expires_at");
 
                     b.Property<int>("RoleId")
                         .HasColumnType("integer")

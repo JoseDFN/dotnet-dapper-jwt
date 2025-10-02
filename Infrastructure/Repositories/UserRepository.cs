@@ -44,13 +44,17 @@ public class UserRepository : GenericRepository<User>, IUserRepository
     public override async Task UpdateAsync(User user)
     {
         var sql = @"UPDATE users
-                SET username=@Username, password_hash=@PasswordHash, role_id=@RoleId, updated_at=@Updated_at
+                SET username=@Username, password_hash=@PasswordHash, role_id=@RoleId, 
+                    refresh_token=@RefreshToken, refresh_token_expires_at=@RefreshTokenExpiresAt, 
+                    updated_at=@Updated_at
                 WHERE id=@Id";
         await _connection.ExecuteAsync(sql, new
         {
             user.Username,
             user.PasswordHash,
             user.RoleId,
+            user.RefreshToken,
+            user.RefreshTokenExpiresAt,
             user.Id,
             Updated_at = user.updated_at
         }, _transaction);
@@ -63,6 +67,8 @@ public class UserRepository : GenericRepository<User>, IUserRepository
                     username, 
                     password_hash AS PasswordHash, 
                     role_id AS RoleId, 
+                    refresh_token AS RefreshToken,
+                    refresh_token_expires_at AS RefreshTokenExpiresAt,
                     created_at AS Created_At, 
                     updated_at AS Updated_At
                 FROM users 
@@ -71,6 +77,27 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         return await _connection.QueryFirstOrDefaultAsync<User>(
             sql,
             new { Username = username },
+            _transaction
+        );
+    }
+
+    public async Task<User?> GetByRefreshTokenAsync(string refreshToken)
+    {
+        var sql = @"SELECT 
+                    id, 
+                    username, 
+                    password_hash AS PasswordHash, 
+                    role_id AS RoleId, 
+                    refresh_token AS RefreshToken,
+                    refresh_token_expires_at AS RefreshTokenExpiresAt,
+                    created_at AS Created_At, 
+                    updated_at AS Updated_At
+                FROM users 
+                WHERE refresh_token = @RefreshToken";
+
+        return await _connection.QueryFirstOrDefaultAsync<User>(
+            sql,
+            new { RefreshToken = refreshToken },
             _transaction
         );
     }

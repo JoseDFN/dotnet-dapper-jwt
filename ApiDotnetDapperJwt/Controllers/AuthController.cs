@@ -24,4 +24,24 @@ public class AuthController : ControllerBase
 
         return Ok(response);
     }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+    {
+        var response = await _authService.RefreshTokenAsync(request);
+        if (response == null)
+            return Unauthorized(new { message = "Invalid refresh token" });
+
+        return Ok(response);
+    }
+
+    [HttpPost("revoke")]
+    public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequestDto request)
+    {
+        var result = await _authService.RevokeTokenAsync(request.RefreshToken);
+        if (!result)
+            return BadRequest(new { message = "Invalid refresh token" });
+
+        return Ok(new { message = "Token revoked successfully" });
+    }
 }
