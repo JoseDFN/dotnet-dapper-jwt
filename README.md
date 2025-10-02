@@ -52,19 +52,176 @@ dotnet ef migrations add InitialCreate -p Infrastructure -s ApiDotnetDapperJwt -
 
 # Aplicar las migraciones a la base de datos
 dotnet ef database update -p Infrastructure -s ApiDotnetDapperJwt
+
+# IMPORTANTE: Ejecutar scripts adicionales requeridos
+psql -U postgres -d netdapperjwt -f scripts/DML.sql
+psql -U postgres -d netdapperjwt -f scripts/procedures.sql
 ```
 
 #### Opción 2: Usando Scripts SQL (Alternativo)
 
-Si prefieres usar los scripts SQL directamente:
+Si prefieres usar los scripts SQL directamente, copia y ejecuta estos scripts en tu herramienta de PostgreSQL (pgAdmin, DBeaver, psql, etc.):
 
-```bash
-# Crear la base de datos y tablas
-psql -U postgres -f scripts/tables.sql
+**Script 1: Crear base de datos y tablas**
+```sql
+CREATE DATABASE netdapperjwt;
+\c netdapperjwt;
 
-# Crear funciones almacenadas (procedimientos)
-psql -U postgres -d netdapperjwt -f scripts/procedures.sql
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role_id INT NOT NULL,
+    refresh_token VARCHAR(500),
+    refresh_token_expires_at TIMESTAMPTZ,
+    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_users_roles FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    sku VARCHAR(50) UNIQUE NOT NULL,
+    price NUMERIC(12,2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    category VARCHAR(50),
+    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    total NUMERIC(12,2) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_orders_users FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    unit_price NUMERIC(12,2) NOT NULL,
+    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_orderitems_orders FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_orderitems_products FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_users_role_id ON users(role_id);
+CREATE INDEX idx_users_refresh_token ON users(refresh_token);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 ```
+
+**Script 2: Insertar roles iniciales (REQUERIDO)**
+```sql
+\c netdapperjwt;
+
+INSERT INTO roles (name, created_at, updated_at)
+VALUES ('Admin', NOW(), NOW());
+
+INSERT INTO roles (name, created_at, updated_at)
+VALUES ('User', NOW(), NOW());
+```
+
+**Script 3: Crear funciones almacenadas (REQUERIDO)**
+```sql
+\c netdapperjwt;
+
+-- Función: auth_user
+CREATE OR REPLACE FUNCTION auth_user(p_username VARCHAR, p_password_hash VARCHAR)
+RETURNS TABLE(user_id INT, role_name VARCHAR) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT u.id, r.name
+    FROM users u
+    JOIN roles r ON u.role_id = r.id
+    WHERE u.username = p_username
+      AND u.password_hash = p_password_hash;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función: create_order
+CREATE OR REPLACE FUNCTION create_order(p_user_id INT, p_items JSON)
+RETURNS INT AS $$
+DECLARE
+    v_order_id INT;
+    v_total NUMERIC(12,2) := 0;
+    v_item JSON;
+    v_product_id INT;
+    v_quantity INT;
+    v_unit_price NUMERIC(12,2);
+    v_current_stock INT;
+BEGIN
+    -- Crear la orden inicial
+    INSERT INTO orders (user_id, total, created_at, updated_at)
+    VALUES (p_user_id, 0, NOW(), NOW())
+    RETURNING id INTO v_order_id;
+
+    -- Procesar cada item
+    FOR v_item IN SELECT * FROM json_array_elements(p_items)
+    LOOP
+        v_product_id := (v_item->>'product_id')::INT;
+        v_quantity := (v_item->>'quantity')::INT;
+        v_unit_price := (v_item->>'unit_price')::NUMERIC;
+
+        -- Validar producto y stock
+        SELECT stock INTO v_current_stock
+        FROM products
+        WHERE id = v_product_id
+        FOR UPDATE;
+
+        IF v_current_stock IS NULL THEN
+            RAISE EXCEPTION 'Product with id % not found', v_product_id;
+        END IF;
+
+        IF v_current_stock < v_quantity THEN
+            RAISE EXCEPTION 'Insufficient stock for product id % (available: %, requested: %)',
+                v_product_id, v_current_stock, v_quantity;
+        END IF;
+
+        -- Insertar item y actualizar stock
+        INSERT INTO order_items (order_id, product_id, quantity, unit_price, created_at, updated_at)
+        VALUES (v_order_id, v_product_id, v_quantity, v_unit_price, NOW(), NOW());
+
+        UPDATE products
+        SET stock = stock - v_quantity, updated_at = NOW()
+        WHERE id = v_product_id;
+
+        v_total := v_total + (v_quantity * v_unit_price);
+    END LOOP;
+
+    -- Actualizar total de la orden
+    UPDATE orders
+    SET total = v_total, updated_at = NOW()
+    WHERE id = v_order_id;
+
+    RETURN v_order_id;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+**⚠️ Importante**: Los scripts `DML.sql` y `procedures.sql` son **obligatorios** para el correcto funcionamiento de la aplicación:
+
+#### Scripts Requeridos:
+- **`DML.sql`**: Crea los roles iniciales
+  - Admin (id=1) - Para gestión de productos
+  - User (id=2) - Para usuarios regulares
+- **`procedures.sql`**: Crea funciones PostgreSQL esenciales
+  - `auth_user()` - Autenticación de usuarios
+  - `create_order()` - Creación de órdenes con validación de stock
 
 ### 3. Configurar la conexión
 
