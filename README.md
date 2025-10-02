@@ -6,7 +6,8 @@ Una API REST desarrollada en .NET 9 que implementa autenticación JWT, gestión 
 
 - **Autenticación JWT**: Sistema de autenticación seguro con tokens JWT
 - **Arquitectura Clean**: Separación en capas (Domain, Application, Infrastructure, API)
-- **Dapper ORM**: Acceso a datos eficiente con Dapper
+- **Entity Framework Core**: ORM moderno con migraciones automáticas
+- **Dapper ORM**: Acceso a datos eficiente con Dapper para consultas complejas
 - **PostgreSQL**: Base de datos robusta y escalable
 - **Swagger/OpenAPI**: Documentación automática de la API
 - **BCrypt**: Encriptación segura de contraseñas
@@ -28,6 +29,7 @@ dotnet-dapper-jwt/
 
 - .NET 9.0 SDK
 - PostgreSQL 12+
+- Entity Framework Core CLI (se instala automáticamente con .NET)
 - Visual Studio 2022 o VS Code
 
 ## 🛠️ Instalación
@@ -40,13 +42,27 @@ cd dotnet-dapper-jwt
 
 ### 2. Configurar la base de datos
 
-Ejecutar los scripts SQL en PostgreSQL:
+#### Opción 1: Usando Entity Framework (Recomendado)
+
+El proyecto utiliza Entity Framework Core con migraciones para la gestión de la base de datos. Las migraciones se encuentran en `Infrastructure/Data/Migrations/`:
+
+```bash
+# Crear una nueva migración (si no existe)
+dotnet ef migrations add InitialCreate -p Infrastructure -s ApiDotnetDapperJwt -o Data/Migrations
+
+# Aplicar las migraciones a la base de datos
+dotnet ef database update -p Infrastructure -s ApiDotnetDapperJwt
+```
+
+#### Opción 2: Usando Scripts SQL (Alternativo)
+
+Si prefieres usar los scripts SQL directamente:
 
 ```bash
 # Crear la base de datos y tablas
 psql -U postgres -f scripts/tables.sql
 
-# Crear procedimientos almacenados
+# Crear funciones almacenadas (procedimientos)
 psql -U postgres -d netdapperjwt -f scripts/procedures.sql
 ```
 
@@ -69,12 +85,12 @@ dotnet restore
 dotnet run --project ApiDotnetDapperJwt
 ```
 
-La API estará disponible en: `https://localhost:7000` (HTTPS) o `http://localhost:5000` (HTTP)
+La API estará disponible en: `https://localhost:7000` (HTTPS) o `http://localhost:5092` (HTTP)
 
 ## 📚 Documentación de la API
 
 Una vez ejecutada la aplicación, puedes acceder a la documentación Swagger en:
-- **Swagger UI**: `https://localhost:7000/swagger`
+- **Swagger UI**: `https://localhost:5092/swagger`
 
 ## 🔐 Autenticación
 
@@ -195,6 +211,13 @@ El JWT está configurado en `appsettings.json`:
 - Repositorios por entidad
 - Operaciones atómicas
 
+### Arquitectura Híbrida EF + Dapper
+- **Entity Framework Core**: Para migraciones y estructura de base de datos
+- **Dapper**: Para consultas complejas y operaciones de alto rendimiento
+- **DbContext**: Configurado para migraciones pero no usado en runtime
+- **IDbConnection**: Registrado para uso directo con Dapper en los repositorios
+- **Migraciones**: Ubicadas en `Infrastructure/Data/Migrations/`
+
 ## 🧪 Testing
 
 Para probar la API, puedes usar:
@@ -238,6 +261,36 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 ## 👨‍💻 Autor
 
 Desarrollado como parte de la prueba técnica para Backend Developer.
+
+---
+
+## 🔄 Gestión de Migraciones
+
+### Crear una nueva migración
+Cuando modifiques las entidades del dominio, crea una nueva migración. Las migraciones se guardarán en `Infrastructure/Data/Migrations/`:
+
+```bash
+# Crear migración después de cambios en entidades
+dotnet ef migrations add NombreDeLaMigracion -p Infrastructure -s ApiDotnetDapperJwt -o Data/Migrations
+
+# Aplicar la nueva migración
+dotnet ef database update -p Infrastructure -s ApiDotnetDapperJwt
+```
+
+### Revertir migraciones
+```bash
+# Revertir a una migración específica
+dotnet ef database update NombreDeLaMigracion -p Infrastructure -s ApiDotnetDapperJwt
+
+# Revertir todas las migraciones
+dotnet ef database update 0 -p Infrastructure -s ApiDotnetDapperJwt
+```
+
+### Ver estado de migraciones
+```bash
+# Listar todas las migraciones aplicadas
+dotnet ef migrations list -p Infrastructure -s ApiDotnetDapperJwt
+```
 
 ---
 
