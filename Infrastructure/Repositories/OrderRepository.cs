@@ -61,7 +61,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 
     public async Task<Order?> GetOrderWithItemsAsync(int orderId)
     {
-        var sql = @"SELECT o.id, o.user_id, o.total, o.created_at, o.updated_at,
+        var sql = @"SELECT o.id, o.user_id as UserId, o.total, o.created_at, o.updated_at,
                            oi.id, oi.order_id, oi.product_id, oi.quantity, oi.unit_price, oi.created_at, oi.updated_at,
                            p.id, p.name, p.sku, p.price, p.stock, p.category, p.created_at, p.updated_at
                     FROM orders o

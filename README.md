@@ -236,15 +236,35 @@ Actualizar el archivo `appsettings.json` con tu cadena de conexión:
 ```
 
 ### 4. Ejecutar la aplicación
+
+#### Opción 1: Solo HTTP (Desarrollo rápido)
 ```bash
 dotnet restore
 dotnet run --project ApiDotnetDapperJwt
 ```
-
 **URLs disponibles:**
-- HTTP: `http://localhost:5092`
-- HTTPS: `https://localhost:7025`
+- API: `http://localhost:5092`
 - Swagger: `http://localhost:5092/swagger`
+
+#### Opción 2: HTTP + HTTPS (Recomendado)
+```bash
+dotnet restore
+dotnet run --project ApiDotnetDapperJwt --launch-profile https
+```
+**URLs disponibles:**
+- API HTTP: `http://localhost:5092`
+- API HTTPS: `https://localhost:7025`
+- Swagger HTTP: `http://localhost:5092/swagger`
+- Swagger HTTPS: `https://localhost:7025/swagger`
+
+> **Nota:** La opción 2 elimina la advertencia de redirección HTTPS y proporciona mayor seguridad.
+
+> **⚠️ Problema con certificado SSL:** Si encuentras errores de certificado SSL en desarrollo, puedes:
+> 1. **Confiar en el certificado de desarrollo:**
+>    ```bash
+>    dotnet dev-certs https --trust
+>    ```
+> 2. **O usar solo HTTP** (Opción 1) para desarrollo local.
 
 ## 🚀 Primer Usuario - Guía Rápida
 
