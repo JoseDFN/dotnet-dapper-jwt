@@ -4,6 +4,7 @@ using Domain.Entities;
 using Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Data;
 
 namespace ApiProject.Controllers;
 
@@ -67,10 +68,20 @@ public class ProductsController : ControllerBase
             updated_at = DateTime.UtcNow
         };
 
-        var id = await _unitOfWork.Products.AddAsync(product);
-        await _unitOfWork.SaveAsync();
+        try
+        {
+            var id = await _unitOfWork.Products.AddAsync(product);
+            await _unitOfWork.SaveAsync();
 
-        return CreatedAtAction(nameof(GetAll), new { id }, product);
+            return CreatedAtAction(nameof(GetAll), new { id }, product);
+        }
+        catch (Exception ex) when (ex.InnerException?.Message?.Contains("duplicate key value violates unique constraint") == true ||
+                                   ex.InnerException?.Message?.Contains("unique constraint") == true ||
+                                   ex.Message.Contains("duplicate key value violates unique constraint") ||
+                                   ex.Message.Contains("unique constraint"))
+        {
+            throw new BusinessException("DUPLICATE_SKU", $"A product with SKU '{dto.Sku}' already exists. Please use a different SKU.");
+        }
     }
 
     // PUT /products/{id}
@@ -105,10 +116,20 @@ public class ProductsController : ControllerBase
         existing.Category = dto.Category;
         existing.updated_at = DateTime.UtcNow;
 
-        await _unitOfWork.Products.UpdateAsync(existing);
-        await _unitOfWork.SaveAsync();
+        try
+        {
+            await _unitOfWork.Products.UpdateAsync(existing);
+            await _unitOfWork.SaveAsync();
 
-        return Ok(new { message = $"Producto {id} actualizado" });
+            return Ok(new { message = $"Producto {id} actualizado" });
+        }
+        catch (Exception ex) when (ex.InnerException?.Message?.Contains("duplicate key value violates unique constraint") == true ||
+                                   ex.InnerException?.Message?.Contains("unique constraint") == true ||
+                                   ex.Message.Contains("duplicate key value violates unique constraint") ||
+                                   ex.Message.Contains("unique constraint"))
+        {
+            throw new BusinessException("DUPLICATE_SKU", $"A product with SKU '{dto.Sku}' already exists. Please use a different SKU.");
+        }
     }
 
     // DELETE /products/{id}

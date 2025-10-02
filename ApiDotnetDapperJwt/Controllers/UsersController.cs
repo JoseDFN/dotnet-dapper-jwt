@@ -34,7 +34,7 @@ public class UsersController : ControllerBase
         if (dto.Password.Length < 6)
             throw new ValidationException("Password", "Password must be at least 6 characters long");
 
-        var role = await _unitOfWork.Roles.GetByNameAsync("user");
+        var role = await _unitOfWork.Roles.GetByNameAsync("User");
         if (role == null)
             throw new BusinessException("DEFAULT_ROLE_NOT_FOUND", "Default user role not found in system");
 

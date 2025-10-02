@@ -90,4 +90,36 @@ public class TestController : ControllerBase
             timestamp = DateTime.UtcNow
         });
     }
+
+    // Endpoint público para probar excepciones
+    [HttpGet("public-exception")]
+    [AllowAnonymous]
+    public IActionResult PublicException()
+    {
+        throw new ValidationException("TestField", "This is a test validation exception");
+    }
+
+    // Endpoint para probar validaciones de AuthController
+    [HttpPost("test-auth-validation")]
+    [AllowAnonymous]
+    public IActionResult TestAuthValidation([FromBody] object request)
+    {
+        return Ok(new { 
+            message = "Auth validation test endpoint - check logs for validation details",
+            request = request,
+            timestamp = DateTime.UtcNow
+        });
+    }
+
+    // Endpoint para probar validaciones de OrdersController
+    [HttpPost("test-orders-validation")]
+    [AllowAnonymous]
+    public IActionResult TestOrdersValidation([FromBody] object request)
+    {
+        return Ok(new { 
+            message = "Orders validation test endpoint - check logs for validation details",
+            request = request,
+            timestamp = DateTime.UtcNow
+        });
+    }
 }

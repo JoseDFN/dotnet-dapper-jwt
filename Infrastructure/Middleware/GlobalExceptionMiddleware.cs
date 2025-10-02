@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Domain.Exceptions;
 
 namespace Infrastructure.Middleware;
@@ -42,7 +44,7 @@ public class GlobalExceptionMiddleware
             case BaseException baseEx:
                 response.StatusCode = baseEx.StatusCode;
                 response.Message = baseEx.Message;
-                response.Details = baseEx.Details;
+                response.Details = baseEx.Details?.ToString();
                 response.ErrorCode = baseEx.ErrorCode;
                 break;
                 
