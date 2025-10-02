@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Domain.Exceptions;
 
 namespace ApiProject.Controllers;
 
@@ -28,5 +29,30 @@ public class TestController : ControllerBase
     public IActionResult ThrowUnauthorizedException()
     {
         throw new UnauthorizedAccessException("Access denied");
+    }
+
+    // Nuevos endpoints para probar excepciones personalizadas
+    [HttpGet("custom-not-found")]
+    public IActionResult ThrowCustomNotFoundException()
+    {
+        throw new NotFoundException("User", 999);
+    }
+
+    [HttpGet("custom-validation")]
+    public IActionResult ThrowCustomValidationException()
+    {
+        throw new ValidationException("Email", "Email format is invalid");
+    }
+
+    [HttpGet("custom-business")]
+    public IActionResult ThrowCustomBusinessException()
+    {
+        throw new BusinessException("INSUFFICIENT_STOCK", "Not enough stock available for this order");
+    }
+
+    [HttpGet("custom-unauthorized")]
+    public IActionResult ThrowCustomUnauthorizedException()
+    {
+        throw new UnauthorizedException("Invalid credentials provided");
     }
 }

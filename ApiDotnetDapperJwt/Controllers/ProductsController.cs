@@ -1,6 +1,7 @@
 using Application.DTOs.Products;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,6 +43,19 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
     {
+        // Validaciones
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            throw new ValidationException("Name", "Product name is required");
+
+        if (string.IsNullOrWhiteSpace(dto.Sku))
+            throw new ValidationException("Sku", "Product SKU is required");
+
+        if (dto.Price <= 0)
+            throw new ValidationException("Price", "Product price must be greater than 0");
+
+        if (dto.Stock < 0)
+            throw new ValidationException("Stock", "Product stock cannot be negative");
+
         var product = new Product
         {
             Name = dto.Name,
@@ -64,8 +78,25 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
     {
+        if (id <= 0)
+            throw new ValidationException("Id", "Product ID must be greater than 0");
+
+        // Validaciones
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            throw new ValidationException("Name", "Product name is required");
+
+        if (string.IsNullOrWhiteSpace(dto.Sku))
+            throw new ValidationException("Sku", "Product SKU is required");
+
+        if (dto.Price <= 0)
+            throw new ValidationException("Price", "Product price must be greater than 0");
+
+        if (dto.Stock < 0)
+            throw new ValidationException("Stock", "Product stock cannot be negative");
+
         var existing = await _unitOfWork.Products.GetByIdAsync(id);
-        if (existing == null) return NotFound();
+        if (existing == null)
+            throw new NotFoundException("Product", id);
 
         existing.Name = dto.Name;
         existing.Sku = dto.Sku;
@@ -85,8 +116,12 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (id <= 0)
+            throw new ValidationException("Id", "Product ID must be greater than 0");
+
         var existing = await _unitOfWork.Products.GetByIdAsync(id);
-        if (existing == null) return NotFound();
+        if (existing == null)
+            throw new NotFoundException("Product", id);
 
         await _unitOfWork.Products.DeleteAsync(id);
         await _unitOfWork.SaveAsync();
