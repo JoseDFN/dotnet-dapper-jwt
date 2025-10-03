@@ -225,7 +225,7 @@ $$ LANGUAGE plpgsql;
 
 ### 3. Configurar la conexión
 
-Actualizar el archivo `appsettings.json` con tu cadena de conexión:
+Actualizar el archivo `appsettings.Development.json` con tu cadena de conexión:
 
 ```json
 {

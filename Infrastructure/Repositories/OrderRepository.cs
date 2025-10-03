@@ -14,7 +14,15 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
     
     public async Task<int> CreateOrderUsingFunctionAsync(int userId, IEnumerable<CreateOrderItemDto> items)
     {
-        var jsonItems = JsonConvert.SerializeObject(items);
+        // Convert to the format expected by the PostgreSQL function
+        var itemsForDb = items.Select(item => new
+        {
+            product_id = item.ProductId,
+            quantity = item.Quantity,
+            unit_price = item.UnitPrice
+        });
+
+        var jsonItems = JsonConvert.SerializeObject(itemsForDb);
 
         var sql = "SELECT create_order(@UserId, @Items::json)";
         var orderId = await _connection.ExecuteScalarAsync<int>(

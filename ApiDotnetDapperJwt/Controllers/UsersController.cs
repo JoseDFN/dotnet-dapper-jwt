@@ -5,6 +5,7 @@ using Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BCrypt.Net;
+using System.Linq;
 
 namespace ApiProject.Controllers;
 
@@ -24,15 +25,17 @@ public class UsersController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto dto)
     {
-        // Validación básica
-        if (string.IsNullOrWhiteSpace(dto.Username))
-            throw new ValidationException("Username", "Username is required");
-
-        if (string.IsNullOrWhiteSpace(dto.Password))
-            throw new ValidationException("Password", "Password is required");
-
-        if (dto.Password.Length < 6)
-            throw new ValidationException("Password", "Password must be at least 6 characters long");
+        // Check if model validation passed
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                );
+            throw new ValidationException(errors);
+        }
 
         var role = await _unitOfWork.Roles.GetByNameAsync("User");
         if (role == null)
