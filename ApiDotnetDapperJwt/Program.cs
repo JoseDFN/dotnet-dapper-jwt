@@ -47,6 +47,20 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// CORS Configuration - Solo para desarrollo
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+    });
+}
+
 // DbContext (solo si lo necesitas en paralelo a Dapper, para migraciones/EF)
 builder.Services.AddDbContext<DotnetDapperJwtDbContext>(options =>
 {
@@ -104,6 +118,12 @@ if (app.Environment.IsDevelopment())
 
 // Global Exception Handling - debe ir al inicio del pipeline
 app.UseGlobalExceptionHandling();
+
+// CORS - debe ir antes de UseAuthentication
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors();
+}
 
 app.UseHttpsRedirection();
 
