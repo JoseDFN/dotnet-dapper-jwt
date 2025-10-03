@@ -4,8 +4,8 @@ CREATE DATABASE netdapperjwt;
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
-    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE users (
@@ -15,8 +15,8 @@ CREATE TABLE users (
     role_id INT NOT NULL,
     refresh_token VARCHAR(500),
     refresh_token_expires_at TIMESTAMPTZ,
-    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_users_roles FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
@@ -27,8 +27,8 @@ CREATE TABLE products (
     price NUMERIC(12,2) NOT NULL,
     stock INT NOT NULL DEFAULT 0,
     category VARCHAR(50),
-    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE orders (
@@ -36,7 +36,7 @@ CREATE TABLE orders (
     user_id INT NOT NULL,
     total NUMERIC(12,2) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_orders_users FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -46,8 +46,8 @@ CREATE TABLE order_items (
     product_id INT NOT NULL,
     quantity INT NOT NULL,
     unit_price NUMERIC(12,2) NOT NULL,
-    "Created_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "Updated_At" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_orderitems_orders FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     CONSTRAINT fk_orderitems_products FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
