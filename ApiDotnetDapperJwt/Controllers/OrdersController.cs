@@ -5,6 +5,7 @@ using Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Linq;
 
 namespace ApiProject.Controllers;
 
@@ -28,39 +29,16 @@ public class OrdersController : ControllerBase
     {
         _logger.LogInformation("Order creation attempt");
 
-        // Validaciones de entrada
-        if (dto == null)
+        // Check if model validation passed
+        if (!ModelState.IsValid)
         {
-            _logger.LogWarning("Order creation attempt with null request");
-            throw new ValidationException("Request", "Order request cannot be null");
-        }
-
-        if (dto.Items == null || !dto.Items.Any())
-        {
-            _logger.LogWarning("Order creation attempt with no items");
-            throw new ValidationException("Items", "Order must contain at least one item");
-        }
-
-        // Validar cada item
-        foreach (var item in dto.Items)
-        {
-            if (item.ProductId <= 0)
-            {
-                _logger.LogWarning("Order creation attempt with invalid product ID: {ProductId}", item.ProductId);
-                throw new ValidationException("ProductId", "Product ID must be greater than 0");
-            }
-
-            if (item.Quantity <= 0)
-            {
-                _logger.LogWarning("Order creation attempt with invalid quantity: {Quantity}", item.Quantity);
-                throw new ValidationException("Quantity", "Quantity must be greater than 0");
-            }
-
-            if (item.UnitPrice <= 0)
-            {
-                _logger.LogWarning("Order creation attempt with invalid unit price: {UnitPrice}", item.UnitPrice);
-                throw new ValidationException("UnitPrice", "Unit price must be greater than 0");
-            }
+            var errors = ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                );
+            throw new ValidationException(errors);
         }
 
         // Obtener userId del token
