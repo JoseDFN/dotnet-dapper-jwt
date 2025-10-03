@@ -52,10 +52,6 @@ dotnet ef migrations add InitialCreate -p Infrastructure -s ApiDotnetDapperJwt -
 
 # Aplicar las migraciones a la base de datos
 dotnet ef database update -p Infrastructure -s ApiDotnetDapperJwt
-
-# IMPORTANTE: Ejecutar scripts adicionales requeridos
-psql -U postgres -d netdapperjwt -f scripts/DML.sql
-psql -U postgres -d netdapperjwt -f scripts/procedures.sql
 ```
 
 #### Opción 2: Usando Scripts SQL (Alternativo)
@@ -125,18 +121,32 @@ CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 ```
 
-**Script 2: Insertar roles iniciales (REQUERIDO)**
+### 3. Configurar datos iniciales y funciones (REQUERIDO)
+
+**⚠️ Importante**: Los siguientes scripts son **obligatorios** para el correcto funcionamiento de la aplicación:
+
+#### Script 2: Insertar roles y productos iniciales
 ```sql
 \c netdapperjwt;
 
+-- Insertar roles
 INSERT INTO roles (name, created_at, updated_at)
 VALUES ('Admin', NOW(), NOW());
 
 INSERT INTO roles (name, created_at, updated_at)
 VALUES ('User', NOW(), NOW());
+
+-- Insertar productos de muestra
+INSERT INTO products (name, sku, price, stock, category, created_at, updated_at)
+VALUES 
+    ('Laptop Gaming', 'LAP001', 5500.00, 10, 'Electronics', NOW(), NOW()),
+    ('Mouse Inalámbrico', 'MOU001', 25.00, 50, 'Electronics', NOW(), NOW()),
+    ('Teclado Mecánico', 'KEY001', 150.00, 30, 'Electronics', NOW(), NOW()),
+    ('Monitor 24"', 'MON001', 300.00, 15, 'Electronics', NOW(), NOW()),
+    ('Auriculares', 'AUD001', 80.00, 25, 'Electronics', NOW(), NOW());
 ```
 
-**Script 3: Crear funciones almacenadas (REQUERIDO)**
+#### Script 3: Crear funciones almacenadas
 ```sql
 \c netdapperjwt;
 
@@ -213,17 +223,12 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-**⚠️ Importante**: Los scripts `DML.sql` y `procedures.sql` son **obligatorios** para el correcto funcionamiento de la aplicación:
+**Scripts disponibles en el proyecto:**
+- **`scripts/tables.sql`**: Estructura de la base de datos
+- **`scripts/DML.sql`**: Roles y productos iniciales
+- **`scripts/procedures.sql`**: Funciones PostgreSQL esenciales
 
-#### Scripts Requeridos:
-- **`DML.sql`**: Crea los roles iniciales
-  - Admin (id=1) - Para gestión de productos
-  - User (id=2) - Para usuarios regulares
-- **`procedures.sql`**: Crea funciones PostgreSQL esenciales
-  - `auth_user()` - Autenticación de usuarios
-  - `create_order()` - Creación de órdenes con validación de stock
-
-### 3. Configurar la conexión
+### 4. Configurar la conexión
 
 Actualizar el archivo `appsettings.Development.json` con tu cadena de conexión:
 
@@ -235,7 +240,7 @@ Actualizar el archivo `appsettings.Development.json` con tu cadena de conexión:
 }
 ```
 
-### 4. Ejecutar la aplicación
+### 5. Ejecutar la aplicación
 
 #### Opción 1: Solo HTTP (Desarrollo rápido)
 ```bash
